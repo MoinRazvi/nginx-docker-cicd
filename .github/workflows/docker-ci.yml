@@ -22,12 +22,12 @@ jobs:
       - name: Build Docker image
         run: docker build --pull -t "$IMAGE" .
         env:
-          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/nginx-docker-cicd:${{ github.sha }}
+          IMAGE: moinrazvi/nginx-docker-cicd:${{ github.sha }}
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/nginx-docker-cicd:${{ github.sha }}
+          image-ref: moinrazvi/nginx-docker-cicd:${{ github.sha }}
           format: table
           exit-code: '1'
           severity: HIGH,CRITICAL
@@ -42,8 +42,9 @@ jobs:
       - name: Push image to Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker tag "$IMAGE" "${{ secrets.DOCKERHUB_USERNAME }}/nginx-docker-cicd:latest"
+          docker tag "$IMAGE" "moinrazvi/nginx-docker-cicd:latest"
           docker push "$IMAGE"
-          docker push "${{ secrets.DOCKERHUB_USERNAME }}/nginx-docker-cicd:latest"
+          docker push "moinrazvi/nginx-docker-cicd:latest"
         env:
-          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/nginx-docker-cicd:${{ github.sha }}
+          IMAGE: moinrazvi/nginx-docker-cicd:${{ github.sha }}
+
