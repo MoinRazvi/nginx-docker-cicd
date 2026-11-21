@@ -51,7 +51,7 @@ jobs:
             exit 1
           fi
 
-          if [ "$DOCKERHUB_USERNAME" != "MoinRazvi" ]; then
+          if [ "$DOCKERHUB_USERNAME" != "moinrazvi" ]; then
             echo "ERROR: Docker Hub username does not match"
             exit 1
           fi
