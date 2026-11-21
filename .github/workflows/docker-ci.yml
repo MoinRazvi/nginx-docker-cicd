@@ -30,7 +30,7 @@ jobs:
         env:
           IMAGE: moinrazvi/nginx-docker-cicd:${{ github.sha }}
 
-      # Step 3: Scan image for vulnerabilities
+      # Step 3: Scan image with Trivy
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -39,7 +39,38 @@ jobs:
           exit-code: '1'
           severity: HIGH,CRITICAL
 
-      # Step 4: Login to Docker Hub
+      # Step 4: Validate Docker Hub secrets safely
+      - name: Validate Docker Hub secrets
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$DOCKERHUB_USERNAME" ]; then
+            echo "ERROR: Docker Hub username is empty"
+            exit 1
+          fi
+
+          if [ "$DOCKERHUB_USERNAME" != "moinrazvi" ]; then
+            echo "ERROR: Docker Hub username does not match"
+            exit 1
+          fi
+
+          if [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "ERROR: Docker Hub token is empty"
+            exit 1
+          fi
+
+          if [[ "$DOCKERHUB_TOKEN" =~ [[:space:]] ]]; then
+            echo "ERROR: Docker Hub token contains whitespace"
+            exit 1
+          fi
+
+          echo "Username check passed"
+          echo "Token is present and contains no whitespace"
+          echo "Token length: $(printf '%s' "$DOCKERHUB_TOKEN" | wc -c)"
+
+      # Step 5: Login to Docker Hub
       - name: Login to Docker Hub
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         env:
@@ -48,7 +79,7 @@ jobs:
         run: |
           printf '%s' "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
 
-      # Step 5: Push image to Docker Hub
+      # Step 6: Push image to Docker Hub
       - name: Push image to Docker Hub
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         env:
